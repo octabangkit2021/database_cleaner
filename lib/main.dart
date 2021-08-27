@@ -24,7 +24,8 @@ class MyApp extends StatelessWidget {
       child: ResponsiveSizer(
         builder: (buildContext , orientation , screenType ) {
           return GetMaterialApp(
-            title: 'Flutter Demo',
+            title: 'Database Cleaner',
+            debugShowCheckedModeBanner: false,
             theme: ThemeData(
               primarySwatch: Colors.blue,
             ),
