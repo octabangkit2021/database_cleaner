@@ -13,6 +13,8 @@ class _WelcomePageState extends State<WelcomePage> {
   bool isInitialWidget = true;
   bool isLogin = true;
   bool hideWelcome = false;
+  final username = TextEditingController();
+  final password = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return BasePage(
@@ -56,10 +58,14 @@ class _WelcomePageState extends State<WelcomePage> {
                         topLeft: Radius.circular(30),
                         topRight: Radius.circular(30))),
                 child: isInitialWidget
-                    ? AnimatedOpacity(duration: const Duration(milliseconds: 1000), opacity: this.hideWelcome ? 0.0 : 1.0,
-                    child: initialWidget())
-                    : AnimatedOpacity(duration: const Duration(milliseconds: 1000), opacity: this.isInitialWidget ? 0.0 : 1.0,
-                    child: login()),
+                    ? AnimatedOpacity(
+                        duration: const Duration(milliseconds: 1000),
+                        opacity: this.hideWelcome ? 0.0 : 1.0,
+                        child: initialWidget())
+                    : AnimatedOpacity(
+                        duration: const Duration(milliseconds: 1000),
+                        opacity: this.isInitialWidget ? 0.0 : 1.0,
+                        child: login()),
               ),
             ),
           )
@@ -100,7 +106,9 @@ class _WelcomePageState extends State<WelcomePage> {
         Container(
           width: 80.w,
           height: 8.h,
-          child: inputField(),
+          child: InputField(
+            controller: username,
+          ),
         ),
         SizedBox(
           height: 3.h,
@@ -110,25 +118,18 @@ class _WelcomePageState extends State<WelcomePage> {
           height: 3.h,
           child: Text(
             "Password",
-            style: roboto.copyWith(fontWeight: FontWeight.w500,),
-          ),
-        ),
-        Container(
-          width: 80.w,
-          height: 8.h,
-          child: TextFormField(
-            textAlignVertical: TextAlignVertical.center,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: primary
-                  )
-                ),
-                contentPadding: EdgeInsets.only(left: 10)
+            style: roboto.copyWith(
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),
+        Container(
+            width: 80.w,
+            height: 8.h,
+            child: InputField(
+              controller: password,
+              obsecure: true,
+            )),
         SizedBox(
           height: 2.h,
         ),
@@ -140,30 +141,60 @@ class _WelcomePageState extends State<WelcomePage> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15)),
                 primary: primary),
-            onPressed: () {},
-            child: Text("MASUK"),
+            onPressed: () async {
+              await context
+                  .read<LoginCubit>()
+                  .doLogin(username.text, password.text);
+              var state = context.read<LoginCubit>().state;
+
+              if (state is LoginSuccess) {
+                await context.read<InitListDataCubit>().getListToko();
+                var state = context.read<InitListDataCubit>().state;
+
+                if (state is GetDataSuccess) {
+                  Get.to(HomePage());
+                } else {
+                  var response = state as GetDataFailed;
+                  Get.snackbar("Gagal", response.message ?? "Gagal Ambil Data", snackStyle: SnackStyle.FLOATING,backgroundColor: "#F47174".toColor(), colorText: Colors.white);
+                }
+              } else {
+                var response = (state as LoginFailed).message;
+                  Get.snackbar("Gagal", response ?? "Gagal Login, Periksa Jaringan Anda", snackStyle: SnackStyle.FLOATING,backgroundColor: "#F47174".toColor(), colorText: Colors.white);
+              }
+            },
+            child: Text("Masuk"),
           ),
         ),
         SizedBox(
           height: 2.h,
         ),
         Material(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15)
-          ),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           color: Colors.transparent,
           child: InkWell(
-            onTap: (){},
+            onTap: () {
+              setState(() {
+                height = 30;
+                hideWelcome = false;
+                title = "BARU PERTAMA MASUK ?";
+                isInitialWidget = true;
+              });
+            },
             radius: 20,
             borderRadius: BorderRadius.circular(15),
             child: Container(
               width: 80.w,
               height: 5.h,
               decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(15)
-              ),
-              child: Center(child: Text("Saya Lupa Lagi Akunnya", style: poppins.copyWith(fontWeight: FontWeight.w100, fontSize: 17.sp),)),
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(15)),
+              child: Center(
+                  child: Text(
+                "Saya Lupa Lagi Akunnya",
+                style: poppins.copyWith(
+                    fontWeight: FontWeight.w100, fontSize: 17.sp),
+              )),
             ),
           ),
         )
@@ -188,9 +219,9 @@ class _WelcomePageState extends State<WelcomePage> {
               setState(() {
                 height = 55;
                 hideWelcome = true;
-                title="TOLONG ISI SEMUA KOTAK";
+                title = "TOLONG ISI SEMUA KOTAK";
+                isInitialWidget = false;
               });
-              new Future.delayed(const Duration(milliseconds: 400), updateUI );
             },
             child: Text("IYA NIH.."),
           ),
@@ -214,11 +245,9 @@ class _WelcomePageState extends State<WelcomePage> {
     );
   }
 
-  void updateUI(){
+  void updateUI() {
     setState(() {
       isInitialWidget = false;
     });
   }
 }
-
-
